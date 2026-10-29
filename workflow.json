@@ -1,0 +1,242 @@
+{
+  "name": "Email Ai Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -880,
+        -64
+      ],
+      "id": "53a20608-d5b3-40fc-b919-c4cad9534c7b",
+      "name": "Gmail Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -592,
+        -64
+      ],
+      "id": "141b0652-6a9a-45ef-83e1-6e2a2afdee56",
+      "name": "Get a message",
+      "webhookId": "96b0f840-718b-4dc2-81d5-b6497b98a801"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a smart asssitanct agent\n\nBelow are the contacnt of the latest email o got.\n\nSubject:{{ $json.Subject }}\nBody: {{ $json.snippet }}\n\nYou have to do 2 thing,\n\n1, specify the lable based on the eamil, use the tool to get all the lables.\n\nlable can be on of them\n\ncourse\ndoubt\n\n2, as a smart assint please create a draft response for me so i can check and sent. \n\n\nmake sure the reply is very respectable and were able requried , please explain student doubt in depth with exampple and also make sure that reply follow strick html foramt so it is easy to read.\n\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -304,
+        -80
+      ],
+      "id": "d2ab8cbc-1f35-44ea-b137-8cb7e34a527c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -448,
+        176
+      ],
+      "id": "15b1445c-56cc-4c35-bddc-1fd1d5d0ead6",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"Lable\": \"doubt \",\n\t\"label_id\": \"121356891\",\n    \"Subject\": \" hey this is \",\n    \"Body\": \" Hey here is you doubt ans \"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        160
+      ],
+      "id": "f6072ce3-3e1c-4b16-9419-6b6b5d7b0229",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Get a message').item.json.id }}",
+        "labelIds": "={{ $json.output.label_id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        -80
+      ],
+      "id": "3d90e770-f766-4ee9-99a9-d1abcbcc8eef",
+      "name": "Add label to message",
+      "webhookId": "5599b2e9-1f72-45cf-a772-1f17b8eeb516"
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        176
+      ],
+      "id": "2ec4ea34-e2c8-4cf4-8a47-584d12642e7f",
+      "name": "Get many labels in Gmail",
+      "webhookId": "1dbdda80-9820-4a98-b3b9-5c6b9fab99a5"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('AI Agent').item.json.output.Subject }}",
+        "emailType": "html",
+        "message": "={{ $('AI Agent').item.json.output.Body }}",
+        "options": {
+          "threadId": "={{ $('Get a message').item.json.threadId }}",
+          "sendTo": "={{ $('Get a message').item.json.From }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -80
+      ],
+      "id": "1c1eedb7-5467-4774-ad46-f2a1775c7085",
+      "name": "Create a draft",
+      "webhookId": "ad902fc9-f5b5-4eb9-9566-f656dd353d71"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many labels in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d6a6314f-297d-44e1-9ffb-a727fc967b66",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed7dbe8053b06ed9d834ab6f2610696222725a769ca7da9b5fab8d7741277c4c"
+  },
+  "nodeGroups": [],
+  "id": "GcPA1sVREYZZNEbR",
+  "tags": [
+    {
+      "updatedAt": "2026-08-10T04:49:08.110Z",
+      "createdAt": "2026-08-10T04:49:08.110Z",
+      "id": "2jsR10VGkhThXUGU",
+      "name": "email agent"
+    }
+  ]
+}
