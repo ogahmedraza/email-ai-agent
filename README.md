@@ -1,17 +1,54 @@
 # Email AI Agent
 
-An n8n workflow that reads incoming Gmail messages, classifies them with AI, applies a label, and prepares a personalized reply draft for human review.
+> Triage incoming Gmail messages with AI, apply the right label, and prepare a reply draft for a human to approve.
 
-## Flow
+## Design principle: draft, do not blindly send
 
-`Gmail Trigger → AI analysis → Classification → Label → Gmail draft`
+This workflow is intentionally built around review. The AI can classify a message and draft a response, but a person remains responsible for the final send. That is a safer pattern for customer support, sales inboxes, and operational email.
 
-## Design choice
+## Workflow map
 
-The workflow does not blindly send AI-generated emails. It creates a draft so a person can review the response before it is sent.
+```text
+Gmail trigger
+  → AI message analysis
+  → classify intent
+  → apply Gmail label
+  → create reply draft
+  → human reviews and sends
+```
 
-## Setup
+## Suitable use cases
 
-Import `workflow.json` into n8n and connect your own Gmail and OpenAI credentials. Configure the labels, prompt, sender rules, and draft behavior before activation.
+- Support-inbox triage
+- Sales-lead routing
+- FAQ response preparation
+- Internal-request classification
+- First-pass email organization
 
-This is a demo workflow and contains no credentials or client data.
+## Before you enable it
+
+1. Import `workflow.json` into n8n.
+2. Connect Gmail and OpenAI credentials you control.
+3. Create or map the labels used by the workflow.
+4. Define which messages should be ignored, escalated, or drafted.
+5. Review the prompt, sender rules, reply tone, and Gmail draft behaviour.
+6. Test using non-sensitive sample emails.
+
+## Important safeguards
+
+- Do not activate an unrestricted trigger on an inbox that contains sensitive material until access and retention rules are clear.
+- Keep a human approval step for financial, legal, medical, HR, or customer-impacting messages.
+- Add sender allowlists or exclusion rules before using it with high-volume mail.
+- This repository contains a sanitized template only: no credentials, inbox data, labels, or recipient addresses are included.
+
+## Repository contents
+
+| File | Purpose |
+| --- | --- |
+| `workflow.json` | Importable n8n workflow |
+| `SECURITY.md` | Credential and disclosure guidance |
+| `LICENSE` | MIT license |
+
+## License
+
+MIT — see [LICENSE](LICENSE).
